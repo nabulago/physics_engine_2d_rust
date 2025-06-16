@@ -9,7 +9,11 @@ fn main() {
         "2D Physics Engine - Press SPACE to add objects, R to reset",
         WIDTH,
         HEIGHT,
-        WindowOptions::default(),
+        WindowOptions {
+            resize: false,
+            scale: minifb::Scale::X1,
+            ..WindowOptions::default()
+        },
     ).unwrap_or_else(|e| {
         panic!("{}", e);
     });
@@ -54,32 +58,32 @@ fn main() {
 fn setup_boundaries(world: &mut World) {
     // Ground
     let ground = RigidBody::new(
-        Vector2D::new(WIDTH as f32 / 2.0, HEIGHT as f32 - 25.0),
-        Shape::rectangle(WIDTH as f32, 50.0),
+        Vector2D::new(WIDTH as f32 / 2.0, HEIGHT as f32 - 10.0),
+        Shape::rectangle(WIDTH as f32 - 20.0, 20.0),
         0.0, // Static
     );
     world.add_body(ground);
     
     // Left wall
     let left_wall = RigidBody::new(
-        Vector2D::new(25.0, HEIGHT as f32 / 2.0),
-        Shape::rectangle(50.0, HEIGHT as f32),
+        Vector2D::new(10.0, HEIGHT as f32 / 2.0),
+        Shape::rectangle(20.0, HEIGHT as f32 - 20.0),
         0.0,
     );
     world.add_body(left_wall);
     
     // Right wall
     let right_wall = RigidBody::new(
-        Vector2D::new(WIDTH as f32 - 25.0, HEIGHT as f32 / 2.0),
-        Shape::rectangle(50.0, HEIGHT as f32),
+        Vector2D::new(WIDTH as f32 - 10.0, HEIGHT as f32 / 2.0),
+        Shape::rectangle(20.0, HEIGHT as f32 - 20.0),
         0.0,
     );
     world.add_body(right_wall);
     
     // Ceiling
     let ceiling = RigidBody::new(
-        Vector2D::new(WIDTH as f32 / 2.0, 25.0),
-        Shape::rectangle(WIDTH as f32, 50.0),
+        Vector2D::new(WIDTH as f32 / 2.0, 10.0),
+        Shape::rectangle(WIDTH as f32 - 20.0, 20.0),
         0.0,
     );
     world.add_body(ceiling);
@@ -89,28 +93,28 @@ fn setup_initial_scene(world: &mut World) {
     use rand::Rng;
     let mut rng = rand::thread_rng();
     
-    // Add some circles
+    // Add some circles with different masses
     for i in 0..3 {
+        let radius = rng.gen_range(15.0..25.0);
         let mut circle = RigidBody::new(
             Vector2D::new(200.0 + i as f32 * 80.0, 100.0),
-            Shape::circle(rng.gen_range(15.0..30.0)),
-            1.0,
+            Shape::circle(radius),
+            radius * 0.1, // Mass proportional to size
         );
-        circle.restitution = rng.gen_range(0.3..0.9);
+        circle.restitution = rng.gen_range(0.2..0.6); // Less bouncy
         world.add_body(circle);
     }
     
-    // Add some rectangles
+    // Add some rectangles with different masses
     for i in 0..2 {
+        let width = rng.gen_range(20.0..40.0);
+        let height = rng.gen_range(20.0..40.0);
         let mut rect = RigidBody::new(
             Vector2D::new(300.0 + i as f32 * 100.0, 200.0),
-            Shape::rectangle(
-                rng.gen_range(20.0..50.0),
-                rng.gen_range(20.0..50.0)
-            ),
-            2.0,
+            Shape::rectangle(width, height),
+            (width * height) * 0.01, // Mass proportional to area
         );
-        rect.restitution = rng.gen_range(0.2..0.8);
+        rect.restitution = rng.gen_range(0.1..0.4); // Even less bouncy
         world.add_body(rect);
     }
 }
@@ -124,24 +128,28 @@ fn handle_input(window: &Window, world: &mut World) {
         let mouse_pos = window.get_mouse_pos(minifb::MouseMode::Clamp);
         
         if let Some((mx, my)) = mouse_pos {
-            let shape = if rng.gen_bool(0.5) {
-                Shape::circle(rng.gen_range(10.0..25.0))
+            // Ensure objects spawn within bounds
+            let safe_x = mx.max(50.0).min(WIDTH as f32 - 50.0);
+            let safe_y = my.max(50.0).min(HEIGHT as f32 - 50.0);
+            
+            let (shape, mass) = if rng.gen_bool(0.5) {
+                let radius = rng.gen_range(10.0..20.0);
+                (Shape::circle(radius), radius * 0.1)
             } else {
-                Shape::rectangle(
-                    rng.gen_range(15.0..40.0),
-                    rng.gen_range(15.0..40.0)
-                )
+                let width = rng.gen_range(15.0..30.0);
+                let height = rng.gen_range(15.0..30.0);
+                (Shape::rectangle(width, height), (width * height) * 0.01)
             };
             
             let mut body = RigidBody::new(
-                Vector2D::new(mx, my),
+                Vector2D::new(safe_x, safe_y),
                 shape,
-                rng.gen_range(0.5..2.0),
+                mass,
             );
-            body.restitution = rng.gen_range(0.2..0.9);
+            body.restitution = rng.gen_range(0.1..0.4); // Less bouncy
             body.velocity = Vector2D::new(
-                rng.gen_range(-100.0..100.0),
-                rng.gen_range(-50.0..50.0)
+                rng.gen_range(-50.0..50.0),  // Reduced initial velocity
+                rng.gen_range(-25.0..25.0)
             );
             world.add_body(body);
         }
