@@ -1,8 +1,5 @@
-use rand::seq::index;
-
 use crate::vector2d::Vector2D;
-use crate::rigidbody::RigidBody;
-use crate::shape::Shape;
+use crate::{rigidbody::RigidBody, shape::Shape};
 use crate::world::World;
 
 pub struct Renderer {
