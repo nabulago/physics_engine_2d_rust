@@ -101,7 +101,7 @@ fn setup_initial_scene(world: &mut World) {
             Shape::circle(radius),
             radius * 0.1, // Mass proportional to size
         );
-        circle.restitution = rng.gen_range(0.2..0.6); // Less bouncy
+        circle.restitution = rng.gen_range(0.1..0.4); // Less bouncy
         world.add_body(circle);
     }
     
