@@ -16,43 +16,42 @@ impl Renderer {
             buffer: vec![0; width * height],
         }
     }
-
+    
     pub fn clear(&mut self, color: u32) {
         self.buffer.fill(color);
     }
-
+    
     pub fn get_buffer(&self) -> &[u32] {
         &self.buffer
     }
-
+    
     pub fn draw_world(&mut self, world: &World) {
         // Clear with dark blue background
         self.clear(0x001122);
-
+        
         // Draw all bodies
         for body in &world.bodies {
             self.draw_body(body);
         }
     }
-
+    
     fn draw_body(&mut self, body: &RigidBody) {
         let color = if body.is_static {
-            0x444444 // Gray for static bodies
-        }
-        else {
-            0xFF6B35 // Orange for dynamic bodies
+            0x444444  // Gray for static bodies
+        } else {
+            0xFF6B35  // Orange for dynamic bodies
         };
-
+        
         match &body.shape {
             Shape::Circle { radius } => {
                 self.draw_circle(body.position, *radius, color);
             },
             Shape::Rectangle { width, height } => {
-            self.draw_rectangle(body.position, *width, *height, color);
+                self.draw_rectangle(body.position, *width, *height, color);
             }
         }
     }
-
+    
     fn draw_circle(&mut self, center: Vector2D, radius: f32, color: u32) {
         let cx = center.x as i32;
         let cy = center.y as i32;
@@ -73,13 +72,13 @@ impl Renderer {
         self.set_pixel(cx, cy, 0xFFFFFF);
     }
     
-    fn draw_rectangle (&mut self, center: Vector2D, width: f32, height: f32, color: u32) {
+    fn draw_rectangle(&mut self, center: Vector2D, width: f32, height: f32, color: u32) {
         let cx = center.x as i32;
         let cy = center.y as i32;
         let w = (width / 2.0) as i32;
         let h = (height / 2.0) as i32;
-
-        // Draw filled rectangles
+        
+        // Draw filled rectangle
         for y in -h..=h {
             for x in -w..=w {
                 let px = cx + x;
@@ -87,27 +86,27 @@ impl Renderer {
                 self.set_pixel(px, py, color);
             }
         }
-
+        
         // Draw center dot
         self.set_pixel(cx, cy, 0xFFFFFF);
     }
-
-    fn set_pixel(&mut self, x: i32, y:i32, color: u32) {
-        if x >= 0 && x < self.width as i32 && y>=0 && y < self.height as i32 {
+    
+    fn set_pixel(&mut self, x: i32, y: i32, color: u32) {
+        if x >= 0 && x < self.width as i32 && y >= 0 && y < self.height as i32 {
             let index = (y as usize) * self.width + (x as usize);
             self.buffer[index] = color;
         }
     }
-
+    
     // Helper method to draw text (simple bitmap font)
-    pub fn draw_text(&mut self, text: &str, x:i32, y:i32, color:u32) {
-        // Simple 5x6 bitmap font for numbers and basic letters
-        for(i, ch) in text.chars().enumerate() {
-            self.draw_char(ch, x + (i as i32)*6, y, color);
+    pub fn draw_text(&mut self, text: &str, x: i32, y: i32, color: u32) {
+        // Simple 5x7 bitmap font for numbers and basic letters
+        for (i, ch) in text.chars().enumerate() {
+            self.draw_char(ch, x + (i as i32) * 6, y, color);
         }
     }
-
-    fn draw_char(&mut self, ch: char, x: i32, y:i32, color: u32) {
+    
+    fn draw_char(&mut self, ch: char, x: i32, y: i32, color: u32) {
         // Simple bitmap patterns for digits
         let pattern = match ch {
             '0' => [
@@ -193,7 +192,7 @@ impl Renderer {
                 0b11111,
             ],
         };
-
+        
         for (row, &bits) in pattern.iter().enumerate() {
             for col in 0..5 {
                 if (bits >> (4 - col)) & 1 == 1 {
@@ -202,5 +201,4 @@ impl Renderer {
             }
         }
     }
-
 }
